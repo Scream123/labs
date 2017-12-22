@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<title>Книги по категориям</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Language" content="ru" />
+	<link rel="stylesheet" type="text/css" href="lab-2-1.css" />
+	<script type="text/javascript" src="../xmlhttprequest.js"></script>
+	<script type="text/javascript">
+		/*
+		**
+		**	Задание 1. Список категорий
+		**
+		*/
+			function fillCategories(){
+				//запрос к серверу
+				var req = getXmlHttpRequest();
+				req.onreadystatechange = function(){
+				if(req.readyState !=4) return;
+					//список selCategory
+					var selCategory = document.getElementById("selCategory");
+					//получим строку ответа
+					var responseText = new String(req.responseText);
+					//разделим строку на массив
+					var cats = responseText.split("\n");
+					//Создадим необходимое количествоэлементов option  с кодами категорий
+					for(var i = 0;i<cats.length; i ++){
+						if(cats[i] == '') continue;
+					//Разделим строку по символу ":"
+						var parts = cats[i].split(":");
+					//Создадим новый элемент option
+						var option = document.createElement("option");
+						option.setAttribute("value", parts[0]);
+						var optionText = document. createTextNode(parts[1]);
+						option.appendChild(optionText);
+						selCategory.appendChild(option);
+					}
+					//сделаем список  выбора с нужным числом  элементов;
+					selCategory.size = selCategory.options.length;
+				};
+			//Метод GET
+				req.open("GET", "getcategories.php",true);
+				req.send(null);
+			}
+			//При завершении загрузки страницы
+			window.onload = function(){
+				fillCategories();
+			}
+		
+	</script>
+</head>
+<body>
+	<h1>Книги по категориям</h1>
+	<form action="#" onsubmit="return false">
+		<div>
+			<label for="selCategory">Категория</label>
+			<select id="selCategory"></select>
+			<button onclick="alert('А это следующая лабораторная работа')">Показать</button>
+		</div>
+	</form>
+</body>
+</html>
+

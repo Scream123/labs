@@ -1,0 +1,9 @@
+<?php
+?>
+    SELECT DISTINCT teachers . name
+    FROM teachers INNER JOIN
+    (lessons INNER JOIN courses
+    ON lessons . course = courses . id)
+    ON teachers . id = lessons . teacher
+    WHERE courses . title LIKE 'Web%'
+    ORDER BY teachers . name

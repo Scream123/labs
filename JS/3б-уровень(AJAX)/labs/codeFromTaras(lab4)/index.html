@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<title>Расчет суммы товаров электронного магазина</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Language" content="ru" />
+	<link rel="stylesheet" type="text/css" href="lab-4.css" />
+	<script type="text/javascript" src="../xmlhttprequest.js"></script>
+	<script type="text/javascript" src="xslt.js"></script>
+	<script type="text/javascript" src="xmlrpc.js"></script>
+	<script type="text/javascript" src="xmltools.js"></script>
+	<script type="text/javascript">
+	
+	
+		/*
+		**
+		**	Задание 3. Получение данных о заказе
+		**
+		*/
+		function calculateOrder(){}
+		
+		
+		/*
+		**
+		**	Задание 4. Отображение данных о заказе
+		**
+		*/
+		function showOder(xmlDOM){}
+</script>
+</head>
+<body>
+	<h1>Расчет суммы заказа электронного магазина</h1>
+	<form action="#" onsubmit="return false">
+		<!-- Сумма заказа -->
+		<div>
+			<label for="txtOrderSum">Сумма заказа</label>
+			<input id="txtOrderSum" type="text" value="1000" />
+			<span>руб.</span>
+		</div>
+		<!-- Доставка -->
+		<div id="divDelivery">
+			<label for="selDelivery">Доставка</label>
+		</div>
+		<!-- Расчет стоимости заказа -->
+		<div id="divOrder"></div>
+		<button onclick="calculateOrder()">Расчитать</button>
+	</form>
+<script type="text/javascript">
+	function sendRequest(method, url, data, callback, options) {
+		options = options || {};
+
+		var req = getXmlHttpRequest();
+		req.open(method, url, true);
+
+		if (options.contentType) {
+			req.setRequestHeader("Content-Type", options.contentType);
+		}
+
+		req.onreadystatechange = function () {
+			if (req.readyState === 4) {
+				if (req.status === 200) {
+					callback(req.responseXML);
+				} else {
+					console.error('Error: ' + req.status);
+				}
+			}
+		}
+		req.send(data);
+	}
+
+	function isError(xmlDOM){
+		try{
+			if (xmlDOM.getElementsByTagName("fault").length > 0){
+				var errorString = xmlDOM.getElementsByTagName("string")[0].firstChild.nodeValue;
+				alert("Ошибка!\n" + errorString);
+				return true;
+			}else{
+				return false;
+			}
+		}catch (e){
+			alert("Ошибка обработки XML!\n" + xmlDOM);
+			return true;
+		}
+	}
+
+	sendRequest("GET", "delivery.xsl", null, function(xml) {
+		var xslDelivery, xslOrder; 
+
+		xslDelivery = xml;
+
+		sendRequest("GET", "order.xsl", null, function(xml) {
+			xslOrder = xml;
+
+			var msg = new XMLRPCMessage("eshop.getDeliveryMethods", "utf-8");
+
+			sendRequest("POST", "lab-4-server.php", msg.xml(), function(xml) {
+
+				function showDelivery(xmlDOM){
+					var html = xsltTransform(xmlDOM, xslDelivery);
+					var divDelivery = document.getElementById("divDelivery");
+					divDelivery.innerHTML += html;
+				}
+
+				try {
+					// console.log(showXML(xml));
+
+					if (!isError(xml)) {
+						showDelivery(xml);
+					}
+				} catch (e) {
+					console.error('Error ' + e.name + ":" + e.message + "\n" + e.stack);
+				}
+
+			}, {
+				contentType: "text/xml"
+			});
+		});
+	});
+</script>
+</body>
+</html>
+

@@ -1,0 +1,12 @@
+define("DB_HOST", "localhost");
+define("DB_LOGIN", "root");
+define("DB_PASSWORD", "pass@word1");
+define("DB_NAME", "gbook");
+ mysql_connect(DB_HOST, DB_LOGIN, DB_PASSWORD) or die(mysql_error());
+ mysql_select_db('gbook') or die(mysql_error());
+ ////////////////////////////////////////////////////////////////////
+ if(POST)
+ INSERT->REDIRECT
+
+ if(del)
+ DELETE0>REDIRECT

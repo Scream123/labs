@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<title>Книги по категориям</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Language" content="ru" />
+	<link rel="stylesheet" type="text/css" href="lab-2-2.css" />
+	<script  src="../xmlhttprequest.js"></script>
+	<script type="text/javascript">
+		/*
+		**
+		** Задание 1. Код вставлять сюда
+		**
+		*/
+		function fillCategories(){
+			//запрос к серверу
+			var req = getXmlHttpRequest();
+			req.onreadystatechange = function(){
+				if(req.readyState != 4) return;
+				//список selCategory
+				var selCategory = document.getElementById("selCategory");
+				//получим строку ответа
+				var responseText = req.responseText;
+				//разделим строку на массив
+				var cats = responseText.split("\n");
+				//Создадим необходимое количествоэлементов option  с кодами категорий
+				for(var i = 0;i<cats.length; i ++){
+					if(cats[i] == '') continue;
+					//Разделим строку по символу ":"
+					var parts = cats[i].split(":");
+					//Создадим новый элемент option
+					var option = document.createElement("option");
+					option.setAttribute("value", parts[0]);
+					var optionText = document. createTextNode(parts[1]);
+					option.appendChild(optionText);
+					selCategory.appendChild(option);
+				}
+				//сделаем список  выбора с нужным числом  элементов;
+				selCategory.size = selCategory.options.length;
+			};
+			//Метод GET
+			req.open("GET", "getcategories.php",true);
+			req.send(null);
+		}
+		//При завершении загрузки страницы
+		window.onload = function(){
+			fillCategories();
+		};
+		/*
+		**
+		**	Задание 2. Выборка книг 
+		**
+		*/
+		//класс книга
+		function Book(author,title,image){
+			this.author = author;
+			this.title = title;
+			this.image = image;
+		}
+		//массив книг указанной категории
+		var books = [];
+		function showBooks(){
+			//узнаем код выбранной категории
+			var selCategory = document.getElementById("selCategory");
+			if(selCategory.selectedIndex<0){
+				alert("Необходимо выбрать категорию в списке");
+				return;
+			}
+			var catId = selCategory.options[selCategory.selectedIndex].value;
+			//Запрос к серверу
+			var req = getXmlHttpRequest();
+			req.onreadystatechange = function(){
+				if(req.readyState != 4) return;
+			//Получим строку ответа
+				var responseText = req.responseText;
+				//Разделим строку на массив
+				var bookStrings = responseText.split("\n");
+				//СФормируем и заполним массив  books
+				books = [];
+				//noinspection JSDuplicatedDeclaration
+				for(var i = 0; i<bookStrings.length;i++){
+					if(bookStrings[i]=="")continue;
+					var parts = bookStrings[i].split("|");
+					books[books.length] = new Book(parts[0], parts[1],parts[2]);
+				}
+				//Таблица tableBooks
+				var tableBooks = document.getElementById("tableBooks");
+				//Очистка таблицы от предыдущей информации
+				while (tableBooks.hasChildNodes())
+				tableBooks.removeChild(tableBooks.lastChild);
+			//Заполним таблицу данными по книгам
+			//noinspection JSDuplicatedDeclaration
+			for(var i = 0; i<books.length;i++){
+				//Создадим новый ряд таблицы
+				var tr = tableBooks.insertRow(tableBooks.rows.length);
+				//добавим ячейки в таблицу
+				var tdAuthor = tr.insertCell(tr.cells.length);
+				tdAuthor.appendChild(document.createTextNode(books[i].author));
+				var tdTitle = tr.insertCell(tr.cells.length);
+				tdTitle.appendChild(document.createTextNode(books[i].title));
+			//Добавим подсветку  при наведении мышки
+				tr.onmouseover = new Function ("trHighLight(this,'#fcc')");
+				tr.onmouseout = new Function ("trHighLight(this,'')");
+
+				//Сохраним картинку книги в атрибуте title элемента TR
+				tr.title = books[i].image;
+				//добавим обработку щелчка
+				tr.onclick = new Function("showImage(this)");
+			}
+			};
+		//Метод POST
+			var postData = "cat=" + catId;
+			req.open("POST","postbooksbycat.php", true);
+			req.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+			//noinspection JSCheckFunctionSignatures
+			//req.setRequestHeader("Content-Length",postData.length);
+			req.send(postData);
+		}
+		/*
+		**
+		**	Задание 3. Показ изображений
+		**
+		*/
+		//Функция подсветки ряда таблицы
+		function trHighLight(trObject,color) {
+			if(color != "")
+				trObject.style.backgroundColor = color;
+			else
+				trObject.style.backgroundColor = "";
+		}
+		//Функция проверки файла на сервере
+		function isExists(url) {
+			//Запрос к серверу
+			var req = getXmlHttpRequest();
+			//Запрашиваем URL ьетодом HEAD в синхронном режиме
+			req.open("HEAD",url,false);
+			req.send(null);
+			//Если файл есть - стаутс = 200
+			return (req.status == 200);
+		}
+		//Функция показа картинки
+		function showImage(trObject){
+		//Путь к файлам изображений на сервере
+		var imagePath = "../../images/";
+		var image = imagePath + trObject.title;
+		var divBookInfo = document.getElementById("divBookInfo");
+		var img = divBookInfo.getElementsByTagName("img")[0];
+
+			if(isExists(image)){
+				//Файл есть покажем картинку
+				img.src = image;
+				divBookInfo.style.display = "block";
+			}else{
+				//Файла нет,картинку не показываем
+				img.src ="";
+				divBookInfo.style.display = "";
+			}
+		}
+	</script>
+</head>
+<body>
+	<h1>Книги по категориям</h1>
+	<form action="#" onsubmit="return false">
+		<div>
+			<label for="selCategory">Категория</label>
+			<select id="selCategory"></select>
+			<button onclick="showBooks(); return false;">Показать</button>
+		</div>
+		
+		<div id="divBookInfo">
+			<img src="" alt="" />
+		</div>			
+	</form>
+	
+	<table id="tableBooks"></table>
+	
+
+	
+</body>
+</html>
+
